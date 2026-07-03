@@ -195,19 +195,64 @@
     updateStatusUI(true);
   });
 
+  function todayId() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
   async function onPosition(pos) {
     const now = Date.now();
     if (now - lastWriteTime < WRITE_INTERVAL_MS) return;
     lastWriteTime = now;
+
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    const accuracy = pos.coords.accuracy ?? null;
+    const speed = pos.coords.speed ?? null;
+    const heading = pos.coords.heading ?? null;
+    const timestamp = Date.now();
+    const dateId = todayId();
+
     try {
-      await db.collection('trackers').doc(selectedTracker.id).update({
-        lat: pos.coords.latitude, lng: pos.coords.longitude,
-        accuracy: pos.coords.accuracy, speed: pos.coords.speed, heading: pos.coords.heading,
-        updatedAt: Date.now()
+      const trackerRef = db.collection('trackers').doc(selectedTracker.id);
+      const historyPointRef = trackerRef
+        .collection('history')
+        .doc(dateId)
+        .collection('points')
+        .doc();
+
+      const batch = db.batch();
+
+      // Live location used by the manager dashboard map
+      batch.update(trackerRef, {
+        lat: lat,
+        lng: lng,
+        accuracy: accuracy,
+        speed: speed,
+        heading: heading,
+        updatedAt: timestamp,
+        lastHistoryDate: dateId
       });
-      updateStatusUI(true, 'Last sent ' + new Date().toLocaleTimeString());
+
+      // Route history used by the manager dashboard history view
+      batch.set(historyPointRef, {
+        lat: lat,
+        lng: lng,
+        accuracy: accuracy,
+        speed: speed,
+        heading: heading,
+        timestamp: timestamp,
+        source: 'mobile'
+      });
+
+      await batch.commit();
+      updateStatusUI(true, 'Last sent ' + new Date().toLocaleTimeString() + ' — history saved');
     } catch (e) {
       console.error('Write failed', e);
+      updateStatusUI(true, 'Live, but last save failed: ' + e.message);
     }
   }
 
