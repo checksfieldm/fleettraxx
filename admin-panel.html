@@ -234,7 +234,15 @@
         </div>
       </div>
       <div class="list-card">
-        <div class="list-head"><h3>All Trackers</h3><span class="count-pill" id="trackerCount">0</span></div>
+        <div class="list-head">
+          <h3>All Trackers</h3>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <select id="trackerFilterCompany" style="width:auto; padding:6px 10px; font-size:12px;">
+              <option value="">All companies</option>
+            </select>
+            <span class="count-pill" id="trackerCount">0</span>
+          </div>
+        </div>
         <div id="trackerList"><div class="empty-row">No trackers yet — register one above.</div></div>
       </div>
     </div>
@@ -368,60 +376,78 @@
     }
   });
 
-  db.collection('companies').orderBy('createdAt', 'desc').onSnapshot(snap => {
-    companiesCache = [];
-    const listEl = document.getElementById('companyList');
-    document.getElementById('companyCount').textContent = snap.size;
-    const select = document.getElementById('trackerCompany');
-    const currentSelection = select.value;
-    select.innerHTML = '<option value="">Select a company…</option>';
+  let latestTrackerDocs = [];
+  let listenersStarted = false;
 
-    if (snap.empty) {
-      listEl.innerHTML = '<div class="empty-row">No companies yet — add one above.</div>';
-      return;
-    }
-    listEl.innerHTML = '';
-    snap.forEach(doc => {
-      const d = doc.data();
-      const isEnabled = d.enabled !== false;
-      companiesCache.push({ id: doc.id, name: d.name, enabled: isEnabled });
+  function startCompaniesListener() {
+    db.collection('companies').orderBy('createdAt', 'desc').onSnapshot(snap => {
+      companiesCache = [];
+      const listEl = document.getElementById('companyList');
+      document.getElementById('companyCount').textContent = snap.size;
+      const select = document.getElementById('trackerCompany');
+      const filterSelect = document.getElementById('trackerFilterCompany');
+      const currentSelection = select.value;
+      const currentFilter = filterSelect.value;
+      select.innerHTML = '<option value="">Select a company…</option>';
+      filterSelect.innerHTML = '<option value="">All companies</option>';
 
-      const opt = document.createElement('option');
-      opt.value = doc.id; opt.textContent = d.name + (isEnabled ? '' : ' (disabled)');
-      select.appendChild(opt);
+      if (snap.empty) {
+        listEl.innerHTML = '<div class="empty-row">No companies yet — add one above.</div>';
+        renderTrackerList();
+        return;
+      }
+      listEl.innerHTML = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        const isEnabled = d.enabled !== false;
+        companiesCache.push({ id: doc.id, name: d.name, enabled: isEnabled });
 
-      const row = document.createElement('div');
-      row.className = 'row' + (isEnabled ? '' : ' is-disabled');
-      row.innerHTML =
-        '<div class="row-left"><div class="row-icon">' + companyIcon + '</div>' +
-        '<div><div class="row-name">' + d.name + '</div><div class="row-meta">ID: ' + doc.id.slice(0, 8) + '…</div></div></div>' +
-        '<div style="display:flex; align-items:center; gap:10px;">' +
-        '<span class="badge ' + (isEnabled ? 'enabled' : 'disabled') + '">' + (isEnabled ? 'enabled' : 'disabled') + '</span>' +
-        '<button class="toggle-btn ' + (isEnabled ? 'to-disable' : 'to-enable') + '" data-id="' + doc.id + '">' + (isEnabled ? 'Disable' : 'Enable') + '</button></div>';
-      row.querySelector('.toggle-btn').addEventListener('click', async () => {
-        const newState = !isEnabled;
-        const confirmMsg = newState
-          ? 'Re-enable "' + d.name + '"? Their login and trackers will work again.'
-          : 'Disable "' + d.name + '"? Their login will be blocked from reading or reporting any data until re-enabled.';
-        if (!confirm(confirmMsg)) return;
-        try {
-          await db.collection('companies').doc(doc.id).update({ enabled: newState });
-          // Keep the login's own active flag in sync with the company state
-          const linkedUsers = await db.collection('users').where('companyId', '==', doc.id).get();
-          const updates = [];
-          linkedUsers.forEach(u => {
-            updates.push(db.collection('users').doc(u.id).update({ active: newState }));
-          });
-          await Promise.all(updates);
-        } catch (e) {
-          alert('Could not update company:\n\n' + e.code + '\n' + e.message);
-          console.error('Toggle company failed', e);
-        }
+        const opt = document.createElement('option');
+        opt.value = doc.id; opt.textContent = d.name + (isEnabled ? '' : ' (disabled)');
+        select.appendChild(opt);
+
+        const filterOpt = document.createElement('option');
+        filterOpt.value = doc.id; filterOpt.textContent = d.name;
+        filterSelect.appendChild(filterOpt);
+
+        const row = document.createElement('div');
+        row.className = 'row' + (isEnabled ? '' : ' is-disabled');
+        row.innerHTML =
+          '<div class="row-left"><div class="row-icon">' + companyIcon + '</div>' +
+          '<div><div class="row-name">' + d.name + '</div><div class="row-meta">ID: ' + doc.id.slice(0, 8) + '…</div></div></div>' +
+          '<div style="display:flex; align-items:center; gap:10px;">' +
+          '<span class="badge ' + (isEnabled ? 'enabled' : 'disabled') + '">' + (isEnabled ? 'enabled' : 'disabled') + '</span>' +
+          '<button class="toggle-btn ' + (isEnabled ? 'to-disable' : 'to-enable') + '" data-id="' + doc.id + '">' + (isEnabled ? 'Disable' : 'Enable') + '</button></div>';
+        row.querySelector('.toggle-btn').addEventListener('click', async () => {
+          const newState = !isEnabled;
+          const confirmMsg = newState
+            ? 'Re-enable "' + d.name + '"? Their login and trackers will work again.'
+            : 'Disable "' + d.name + '"? Their login will be blocked from reading or reporting any data until re-enabled.';
+          if (!confirm(confirmMsg)) return;
+          try {
+            await db.collection('companies').doc(doc.id).update({ enabled: newState });
+            const linkedUsers = await db.collection('users').where('companyId', '==', doc.id).get();
+            const updates = [];
+            linkedUsers.forEach(u => {
+              updates.push(db.collection('users').doc(u.id).update({ active: newState }));
+            });
+            await Promise.all(updates);
+          } catch (e) {
+            alert('Could not update company:\n\n' + e.code + '\n' + e.message);
+            console.error('Toggle company failed', e);
+          }
+        });
+        listEl.appendChild(row);
       });
-      listEl.appendChild(row);
+      if (currentSelection) select.value = currentSelection;
+      if (currentFilter) filterSelect.value = currentFilter;
+      renderTrackerList();
+    }, err => {
+      document.getElementById('companyList').innerHTML = '<div class="empty-row">Could not load companies: ' + err.message + '</div>';
     });
-    if (currentSelection) select.value = currentSelection;
-  });
+  }
+
+  document.getElementById('trackerFilterCompany').addEventListener('change', renderTrackerList);
 
   // ---- Trackers ----
   document.getElementById('addTrackerBtn').addEventListener('click', async () => {
@@ -451,16 +477,28 @@
     }
   });
 
-  db.collection('trackers').orderBy('createdAt', 'desc').onSnapshot(snap => {
+  function startTrackersListener() {
+    db.collection('trackers').orderBy('createdAt', 'desc').onSnapshot(snap => {
+      latestTrackerDocs = [];
+      snap.forEach(doc => latestTrackerDocs.push({ id: doc.id, data: doc.data() }));
+      renderTrackerList();
+    }, err => {
+      document.getElementById('trackerList').innerHTML = '<div class="empty-row">Could not load trackers: ' + err.message + '</div>';
+    });
+  }
+
+  function renderTrackerList() {
     const listEl = document.getElementById('trackerList');
-    document.getElementById('trackerCount').textContent = snap.size;
-    if (snap.empty) {
-      listEl.innerHTML = '<div class="empty-row">No trackers yet — register one above.</div>';
+    const filterCompanyId = document.getElementById('trackerFilterCompany').value;
+    const filtered = filterCompanyId ? latestTrackerDocs.filter(t => t.data.companyId === filterCompanyId) : latestTrackerDocs;
+
+    document.getElementById('trackerCount').textContent = filtered.length;
+    if (filtered.length === 0) {
+      listEl.innerHTML = '<div class="empty-row">' + (latestTrackerDocs.length === 0 ? 'No trackers yet — register one above.' : 'No trackers for this company.') + '</div>';
       return;
     }
     listEl.innerHTML = '';
-    snap.forEach(doc => {
-      const d = doc.data();
+    filtered.forEach(({ id, data: d }) => {
       const company = companiesCache.find(c => c.id === d.companyId);
       const companyName = company ? company.name : 'Unassigned';
       const isOnline = d.updatedAt && (Date.now() - d.updatedAt < 60000);
@@ -472,9 +510,9 @@
         '<div class="row-left"><div class="row-icon">' + trackerIcon + '</div>' +
         '<div><div class="row-name">' + d.name + '</div><div class="row-meta">' + companyName + ' &middot; ' + timeAgo(d.updatedAt) + '</div></div></div>' +
         '<div style="display:flex; align-items:center; gap:10px;">' +
-        '<span class="badge ' + (isOnline ? 'online' : 'waiting') + '">' + (isOnline ? 'reporting' : 'no data') + '</span>' +
+        '<span class="badge ' + (isOnline ? 'online' : 'waiting') + '">' + (isOnline ? 'Live' : 'Offline') + '</span>' +
         '<span class="badge ' + (isEnabled ? 'enabled' : 'disabled') + '">' + (isEnabled ? 'enabled' : 'disabled') + '</span>' +
-        '<button class="toggle-btn ' + (isEnabled ? 'to-disable' : 'to-enable') + '" data-id="' + doc.id + '">' + (isEnabled ? 'Disable' : 'Enable') + '</button></div>';
+        '<button class="toggle-btn ' + (isEnabled ? 'to-disable' : 'to-enable') + '" data-id="' + id + '">' + (isEnabled ? 'Disable' : 'Enable') + '</button></div>';
       row.querySelector('.toggle-btn').addEventListener('click', async () => {
         const newState = !isEnabled;
         const confirmMsg = newState
@@ -482,7 +520,7 @@
           : 'Disable tracker "' + d.name + '"? It will stop being able to report its position until re-enabled.';
         if (!confirm(confirmMsg)) return;
         try {
-          await db.collection('trackers').doc(doc.id).update({ enabled: newState });
+          await db.collection('trackers').doc(id).update({ enabled: newState });
         } catch (e) {
           alert('Could not update tracker:\n\n' + e.code + '\n' + e.message);
           console.error('Toggle tracker failed', e);
@@ -490,7 +528,7 @@
       });
       listEl.appendChild(row);
     });
-  });
+  }
 
   // ---- Auth state ----
   auth.onAuthStateChanged(async (user) => {
@@ -505,6 +543,12 @@
         loginView.style.display = 'none';
         panelView.classList.add('show');
         document.getElementById('whoEmail').textContent = user.email;
+
+        if (!listenersStarted) {
+          listenersStarted = true;
+          startCompaniesListener();
+          startTrackersListener();
+        }
       } catch (e) {
         showError('Could not verify admin access: ' + e.message);
         auth.signOut();
