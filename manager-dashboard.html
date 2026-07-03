@@ -144,9 +144,62 @@
   .marker-pin.disabled { background: var(--muted); }
   .marker-pin-dot { width: 8px; height: 8px; border-radius: 50%; background: white; transform: rotate(45deg); }
 
+
+
+  .fleet-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 12px 14px 0; }
+  .summary-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 11px; }
+  .summary-value { font-family: 'DM Mono', monospace; font-size: 17px; font-weight: 700; color: var(--text); line-height: 1; }
+  .summary-label { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); margin-top: 5px; }
+  .toolbar { padding: 10px 14px 12px; display: grid; grid-template-columns: 1fr 112px; gap: 8px; border-bottom: 1px solid var(--border); }
+  .toolbar input, .toolbar select { height: 40px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface2); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 12.5px; outline: none; }
+  .toolbar input:focus, .toolbar select:focus { border-color: var(--primary); }
+  .mini-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .mini-chip { font-family: 'DM Mono', monospace; font-size: 9.5px; color: var(--text3); background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 3px 7px; }
+  .map-actions { position: absolute; top: 14px; right: 14px; z-index: 500; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .map-action { background: var(--surface); color: var(--text2); box-shadow: var(--shadow-sm); border: 1px solid var(--border); padding: 9px 11px; font-size: 11.5px; }
+  .detail-panel { position: absolute; left: 18px; bottom: 18px; z-index: 500; width: min(390px, calc(100% - 36px)); background: rgba(255,255,255,.96); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow-md); padding: 16px; display: none; }
+  .detail-panel.show { display: block; }
+  .detail-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+  .detail-title { font-size: 15px; font-weight: 800; }
+  .detail-sub { font-family: 'DM Mono', monospace; color: var(--text3); font-size: 10.5px; margin-top: 3px; }
+  .detail-close { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); box-shadow: none; padding: 6px 9px; font-size: 11px; }
+  .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .detail-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 9px; }
+  .detail-stat b { display: block; font-family: 'DM Mono', monospace; font-size: 12px; }
+  .detail-stat span { display: block; margin-top: 3px; font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  .detail-address { color: var(--text2); font-size: 11.5px; line-height: 1.45; margin-bottom: 12px; }
+  .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .detail-link { text-decoration: none; background: var(--primary); color: #fff; border-radius: 10px; padding: 10px 12px; font-size: 12px; font-weight: 800; box-shadow: 0 4px 14px rgba(26,95,189,.20); }
+  .detail-link.secondary { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); box-shadow: none; }
+  .popup-actions { margin-top: 8px; display: flex; gap: 6px; }
+  .popup-actions a { text-decoration: none; background: var(--primary); color: #fff; border-radius: 8px; padding: 6px 8px; font-size: 10px; font-weight: 700; }
+
+  .history-tools { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: grid; gap: 8px; }
+  .history-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .history-row input { flex: 1; min-width: 145px; padding: 9px 10px; font-size: 12px; }
+  .history-btn { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); box-shadow: none; padding: 9px 10px; font-size: 11.5px; }
+  .history-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 14px rgba(26,95,189,.18); }
+  .history-status { font-size: 11.5px; color: var(--text3); line-height: 1.4; }
+  .route-card { position: absolute; left: 18px; top: 18px; z-index: 501; width: min(360px, calc(100% - 36px)); background: rgba(255,255,255,.96); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-md); padding: 14px; display: none; }
+  .route-card.show { display: block; }
+  .route-title { font-size: 13px; font-weight: 800; margin-bottom: 4px; }
+  .route-sub { font-size: 11px; color: var(--text3); line-height: 1.4; margin-bottom: 10px; }
+  .route-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .route-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 11px; padding: 8px; }
+  .route-stat b { display: block; font-family: 'DM Mono', monospace; font-size: 11.5px; }
+  .route-stat span { display: block; margin-top: 3px; font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+
   @media (max-width: 760px) {
     .layout { flex-direction: column; }
-    .sidebar { width: 100%; min-width: 0; height: 46%; border-right: none; border-bottom: 1px solid var(--border); }
+    .sidebar { width: 100%; min-width: 0; height: 49%; border-right: none; border-bottom: 1px solid var(--border); }
+    .fleet-summary { grid-template-columns: repeat(4, 1fr); padding: 8px 10px 0; }
+    .summary-card { padding: 8px; }
+    .summary-value { font-size: 14px; }
+    .summary-label { font-size: 8.5px; }
+    .toolbar { padding: 8px 10px; }
+    .map-actions { top: 10px; right: 10px; }
+    .detail-panel { left: 10px; bottom: 10px; width: calc(100% - 20px); padding: 13px; max-height: 58vh; overflow-y: auto; }
+    .route-card { left: 10px; top: 10px; width: calc(100% - 20px); }
     .map-wrap { flex: 1; min-height: 0; }
   }
 </style>
@@ -192,9 +245,32 @@
   <div class="layout">
     <div class="sidebar">
       <div class="sidebar-head"><h2>Your Fleet</h2><span class="count-pill" id="trackerCount">0</span></div>
+      <div class="fleet-summary">
+        <div class="summary-card"><div class="summary-value" id="statTotal">0</div><div class="summary-label">Total</div></div>
+        <div class="summary-card"><div class="summary-value" id="statLive">0</div><div class="summary-label">Live</div></div>
+        <div class="summary-card"><div class="summary-value" id="statOffline">0</div><div class="summary-label">Offline</div></div>
+        <div class="summary-card"><div class="summary-value" id="statNoGps">0</div><div class="summary-label">No GPS</div></div>
+      </div>
+      <div class="toolbar">
+        <input id="trackerSearch" type="search" placeholder="Search vehicle, reg or driver…">
+        <select id="statusFilter" aria-label="Filter fleet">
+          <option value="all">All</option>
+          <option value="online">Live</option>
+          <option value="offline">Offline</option>
+          <option value="disabled">Disabled</option>
+          <option value="nogps">No GPS</option>
+        </select>
+      </div>
       <div class="tracker-list" id="trackerList"></div>
     </div>
     <div class="map-wrap">
+      <div class="map-actions">
+        <button class="map-action" id="fitFleetBtn">Fit Fleet</button>
+        <button class="map-action" id="toggleMapBtn">Satellite</button>
+        <button class="map-action" id="exportCsvBtn">Export CSV</button>
+      </div>
+      <div class="detail-panel" id="detailPanel"></div>
+      <div class="route-card" id="routeCard"></div>
       <div id="map"></div>
     </div>
   </div>
@@ -238,21 +314,27 @@
 
   document.getElementById('signOutBtn').addEventListener('click', () => auth.signOut());
 
-  // Google Maps-style tiles (same visual approach as Site Intelligence) — no API key required for this tile endpoint.
+  // Google Maps-style tiles (same visual approach as Site Intelligence) — no API key required for these tile endpoints.
   const map = L.map('map', { zoomControl: false }).setView([54.5, -3.5], 6);
   L.control.zoom({ position: 'bottomright' }).addTo(map);
-  L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-    maxZoom: 20,
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    attribution: '&copy; Google Maps'
+  const streetLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
   }).addTo(map);
+  const satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+    maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '&copy; Google Maps'
+  });
+  const trailLayer = L.layerGroup().addTo(map);
+  const historyLayer = L.layerGroup().addTo(map);
 
   const markers = {};
+  const trails = {};
   let hasFitOnce = false;
   let selectedTrackerId = null;
   let myCompanyId = null;
   let trackersUnsub = null;
   let lastTrackers = [];
+  let filtered = [];
+  let mapMode = 'street';
   const geocodeCache = {};
 
   function makeIcon(status) {
@@ -263,9 +345,54 @@
     });
   }
 
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function toMillis(value) {
+    if (!value) return null;
+    if (typeof value === 'number') return value;
+    if (value.toMillis) return value.toMillis();
+    if (value.seconds) return value.seconds * 1000;
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  function vehicleReg(t) { return t.vrn || t.reg || t.registration || t.vehicleReg || ''; }
+  function driverName(t) { return t.driverName || t.driver || t.assignedDriver || ''; }
+  function fmtSpeed(v) { return v == null || v === '' ? '—' : Math.round(Number(v)) + ' mph'; }
+  function fmtBattery(v) { return v == null || v === '' ? '—' : Math.round(Number(v)) + '%'; }
+  function fmtAccuracy(v) { return v == null || v === '' ? '—' : Math.round(Number(v)) + 'm'; }
+  function fmtIgnition(v) { return v === true ? 'On' : v === false ? 'Off' : '—'; }
+
+  function todayId() { return new Date().toISOString().slice(0,10); }
+  function formatTime(ms) { return ms ? new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'; }
+  function kmBetween(a, b) {
+    const R = 6371;
+    const dLat = (b.lat - a.lat) * Math.PI / 180;
+    const dLng = (b.lng - a.lng) * Math.PI / 180;
+    const lat1 = a.lat * Math.PI / 180;
+    const lat2 = b.lat * Math.PI / 180;
+    const x = Math.sin(dLat/2) ** 2 + Math.sin(dLng/2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+    return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+  }
+  function routeDistance(points) {
+    let km = 0;
+    for (let i = 1; i < points.length; i++) km += kmBetween(points[i-1], points[i]);
+    return km;
+  }
+  function normaliseHistoryPoint(p) {
+    if (!p) return null;
+    const lat = Number(p.lat ?? p.latitude);
+    const lng = Number(p.lng ?? p.longitude ?? p.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    return { lat, lng, timestamp: toMillis(p.timestamp || p.updatedAt || p.createdAt || p.time), speed: p.speed, accuracy: p.accuracy };
+  }
+
   function timeAgo(ms) {
+    ms = toMillis(ms);
     if (!ms) return 'never reported';
-    const s = Math.round((Date.now() - ms) / 1000);
+    const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
     if (s < 60) return s + 's ago';
     const m = Math.round(s / 60);
     if (m < 60) return m + 'm ago';
@@ -275,7 +402,8 @@
 
   function statusOf(t) {
     if (!t.enabled) return 'disabled';
-    if (t.updatedAt && (Date.now() - t.updatedAt < 60000)) return 'online';
+    const ms = toMillis(t.updatedAt);
+    if (ms && (Date.now() - ms < 60000)) return 'online';
     return 'offline';
   }
   function statusLabel(status) { return status === 'online' ? 'Live' : status === 'offline' ? 'Offline' : 'Disabled'; }
@@ -301,7 +429,148 @@
     selectedTrackerId = t.id;
     map.flyTo([t.lat, t.lng], 15, { duration: 0.6 });
     if (markers[t.id]) markers[t.id].openPopup();
-    renderList(lastTrackers);
+    showDetail(t);
+    renderList(filtered);
+  }
+
+  function updateStats(trackers) {
+    const total = trackers.length;
+    const live = trackers.filter(t => statusOf(t) === 'online').length;
+    const disabled = trackers.filter(t => statusOf(t) === 'disabled').length;
+    const noGps = trackers.filter(t => t.lat == null || t.lng == null).length;
+    const offline = trackers.filter(t => statusOf(t) === 'offline').length;
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statLive').textContent = live;
+    document.getElementById('statOffline').textContent = offline;
+    document.getElementById('statNoGps').textContent = noGps;
+    document.getElementById('trackerCount').textContent = total + (disabled ? ' / ' + disabled + ' disabled' : '');
+  }
+
+  function applyFilters(trackers) {
+    const q = document.getElementById('trackerSearch').value.trim().toLowerCase();
+    const mode = document.getElementById('statusFilter').value;
+    return trackers.filter(t => {
+      const status = statusOf(t);
+      const noGps = t.lat == null || t.lng == null;
+      if (mode === 'nogps' && !noGps) return false;
+      if (mode !== 'all' && mode !== 'nogps' && status !== mode) return false;
+      if (!q) return true;
+      return [t.name, vehicleReg(t), driverName(t), t.id].some(v => String(v || '').toLowerCase().includes(q));
+    });
+  }
+
+  function showDetail(t) {
+    const status = statusOf(t);
+    const reg = vehicleReg(t) || 'No reg';
+    const driver = driverName(t) || 'No driver assigned';
+    const hasPos = t.lat != null && t.lng != null;
+    const mapsUrl = hasPos ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(t.lat + ',' + t.lng) : '#';
+    const panel = document.getElementById('detailPanel');
+    panel.classList.add('show');
+    panel.innerHTML =
+      '<div class="detail-top"><div><div class="detail-title">' + escapeHtml(t.name || 'Unnamed tracker') + '</div>' +
+      '<div class="detail-sub">' + escapeHtml(reg) + ' • ' + escapeHtml(driver) + '</div></div>' +
+      '<button class="detail-close" id="closeDetailBtn">Close</button></div>' +
+      '<div class="detail-grid">' +
+      '<div class="detail-stat"><b>' + statusLabel(status) + '</b><span>Status</span></div>' +
+      '<div class="detail-stat"><b>' + fmtSpeed(t.speed) + '</b><span>Speed</span></div>' +
+      '<div class="detail-stat"><b>' + fmtBattery(t.battery) + '</b><span>Battery</span></div>' +
+      '<div class="detail-stat"><b>' + fmtAccuracy(t.accuracy) + '</b><span>Accuracy</span></div>' +
+      '<div class="detail-stat"><b>' + fmtIgnition(t.ignition) + '</b><span>Ignition</span></div>' +
+      '<div class="detail-stat"><b>' + timeAgo(t.updatedAt) + '</b><span>Updated</span></div>' +
+      '</div>' +
+      '<div class="detail-address" id="detailAddress">' + (hasPos ? 'Locating address…' : 'No position reported yet.') + '</div>' +
+      '<div class="detail-actions">' +
+      (hasPos ? '<a class="detail-link" target="_blank" rel="noopener" href="' + mapsUrl + '">Open in Maps</a>' : '') +
+      '<a class="detail-link secondary" href="#" id="copyLocationBtn">Copy location</a>' +
+      '<a class="detail-link secondary" href="#" id="drawTrailBtn">Show live trail</a>' +
+      '</div>' +
+      '<div class="history-tools">' +
+      '<div class="history-row"><input type="date" id="historyDate" value="' + todayId() + '"><button class="history-btn primary" id="loadHistoryBtn">Load route</button><button class="history-btn" id="clearHistoryBtn">Clear</button></div>' +
+      '<div class="history-status" id="historyStatus">Load a date to view the route history for this tracker.</div>' +
+      '</div>';
+    document.getElementById('closeDetailBtn').onclick = () => panel.classList.remove('show');
+    document.getElementById('copyLocationBtn').onclick = (e) => { e.preventDefault(); if (hasPos) navigator.clipboard.writeText(t.lat + ', ' + t.lng); };
+    document.getElementById('drawTrailBtn').onclick = (e) => { e.preventDefault(); drawLiveTrail(t.id); };
+    document.getElementById('loadHistoryBtn').onclick = (e) => { e.preventDefault(); loadHistoryRoute(t); };
+    document.getElementById('clearHistoryBtn').onclick = (e) => { e.preventDefault(); clearHistoryRoute(); };
+    if (hasPos) reverseGeocode(t.id, t.lat, t.lng).then(address => {
+      const el = document.getElementById('detailAddress'); if (el) el.textContent = address;
+    });
+  }
+
+
+  function clearHistoryRoute() {
+    historyLayer.clearLayers();
+    const card = document.getElementById('routeCard');
+    card.classList.remove('show');
+    card.innerHTML = '';
+    const status = document.getElementById('historyStatus');
+    if (status) status.textContent = 'Route cleared.';
+  }
+
+  async function loadHistoryRoute(t) {
+    const status = document.getElementById('historyStatus');
+    const dateInput = document.getElementById('historyDate');
+    const dateId = dateInput && dateInput.value ? dateInput.value : todayId();
+    if (status) status.textContent = 'Loading route for ' + dateId + '…';
+    historyLayer.clearLayers();
+    try {
+      let points = [];
+
+      // Preferred structure: trackers/{trackerId}/history/{YYYY-MM-DD}/points/{pointId}
+      const pointSnap = await db.collection('trackers').doc(t.id).collection('history').doc(dateId).collection('points').orderBy('timestamp').limit(1500).get();
+      pointSnap.forEach(doc => { const pt = normaliseHistoryPoint(doc.data()); if (pt) points.push(pt); });
+
+      // Fallback structure: trackers/{trackerId}/history/{YYYY-MM-DD} with a points array
+      if (points.length === 0) {
+        const dayDoc = await db.collection('trackers').doc(t.id).collection('history').doc(dateId).get();
+        if (dayDoc.exists) {
+          const d = dayDoc.data();
+          const arr = d.points || d.locations || d.route || [];
+          if (Array.isArray(arr)) points = arr.map(normaliseHistoryPoint).filter(Boolean);
+        }
+      }
+
+      points = points.filter(p => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+      if (points.length < 2) {
+        if (status) status.textContent = 'No route found for ' + dateId + '. This means no history was written for that date, or the phone/tracker did not have permission/background location running.';
+        return;
+      }
+
+      const latLngs = points.map(p => [p.lat, p.lng]);
+      L.polyline(latLngs, { weight: 5, opacity: 0.75 }).addTo(historyLayer);
+      L.circleMarker(latLngs[0], { radius: 6, weight: 2, fillOpacity: 0.9 }).addTo(historyLayer).bindPopup('Start ' + formatTime(points[0].timestamp));
+      L.circleMarker(latLngs[latLngs.length - 1], { radius: 6, weight: 2, fillOpacity: 0.9 }).addTo(historyLayer).bindPopup('End ' + formatTime(points[points.length - 1].timestamp));
+      map.fitBounds(L.latLngBounds(latLngs), { padding: [55, 55] });
+
+      const km = routeDistance(points);
+      const movingSpeeds = points.map(p => Number(p.speed)).filter(v => Number.isFinite(v) && v > 0);
+      const maxSpeed = movingSpeeds.length ? Math.max(...movingSpeeds) : null;
+      const first = points[0].timestamp;
+      const last = points[points.length - 1].timestamp;
+      const hours = first && last ? Math.max(0, (last - first) / 3600000) : null;
+      const card = document.getElementById('routeCard');
+      card.classList.add('show');
+      card.innerHTML =
+        '<div class="route-title">' + escapeHtml(t.name || 'Tracker') + ' route</div>' +
+        '<div class="route-sub">' + escapeHtml(dateId) + ' • ' + points.length + ' GPS points • ' + formatTime(first) + ' to ' + formatTime(last) + '</div>' +
+        '<div class="route-grid">' +
+        '<div class="route-stat"><b>' + km.toFixed(1) + ' km</b><span>Distance</span></div>' +
+        '<div class="route-stat"><b>' + (hours == null ? '—' : hours.toFixed(1) + 'h') + '</b><span>Window</span></div>' +
+        '<div class="route-stat"><b>' + (maxSpeed == null ? '—' : Math.round(maxSpeed) + ' mph') + '</b><span>Max speed</span></div>' +
+        '</div>';
+      if (status) status.textContent = 'Route loaded. Distance is an estimate based on GPS points.';
+    } catch (e) {
+      if (status) status.textContent = 'Could not load route: ' + e.message;
+    }
+  }
+
+  function drawLiveTrail(trackerId) {
+    trailLayer.clearLayers();
+    const pts = trails[trackerId] || [];
+    if (pts.length < 2) return;
+    L.polyline(pts.map(p => [p.lat, p.lng]), { weight: 4, opacity: 0.7 }).addTo(trailLayer);
   }
 
   function renderList(trackers) {
@@ -324,11 +593,18 @@
         addrHtml = '<div class="tracker-addr" id="' + addrId + '">No position reported yet.</div>';
       }
 
+      const reg = vehicleReg(t);
+      const driver = driverName(t);
       card.innerHTML =
-        '<div class="tracker-top"><div class="tracker-name">' + t.name + '</div>' +
+        '<div class="tracker-top"><div class="tracker-name">' + escapeHtml(t.name || 'Unnamed tracker') + '</div>' +
         '<span class="badge ' + status + '">' + statusLabel(status) + '</span></div>' +
         '<div class="tracker-meta">' + (status === 'online' ? '<span class="dot"></span>' : '') + timeAgo(t.updatedAt) + '</div>' +
-        addrHtml;
+        '<div class="mini-meta">' +
+          (reg ? '<span class="mini-chip">' + escapeHtml(reg) + '</span>' : '') +
+          (driver ? '<span class="mini-chip">' + escapeHtml(driver) + '</span>' : '') +
+          '<span class="mini-chip">' + fmtSpeed(t.speed) + '</span>' +
+          '<span class="mini-chip">Acc ' + fmtAccuracy(t.accuracy) + '</span>' +
+        '</div>' + addrHtml;
 
       card.addEventListener('click', () => flyToTracker(t));
       listEl.appendChild(card);
@@ -348,11 +624,20 @@
       if (t.lat == null || t.lng == null) return;
       seen.add(t.id);
       const status = statusOf(t);
+      if (!trails[t.id]) trails[t.id] = [];
+      const last = trails[t.id][trails[t.id].length - 1];
+      if (!last || Math.abs(last.lat - t.lat) > 0.00001 || Math.abs(last.lng - t.lng) > 0.00001) {
+        trails[t.id].push({ lat: t.lat, lng: t.lng });
+        if (trails[t.id].length > 80) trails[t.id].shift();
+      }
+      const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(t.lat + ',' + t.lng);
       const popupHtml =
-        '<div class="popup-name">' + t.name + '</div>' +
+        '<div class="popup-name">' + escapeHtml(t.name || 'Unnamed tracker') + '</div>' +
         '<div class="popup-row">' + t.lat.toFixed(6) + ', ' + t.lng.toFixed(6) + '</div>' +
         '<div class="popup-row">Updated ' + timeAgo(t.updatedAt) + '</div>' +
-        '<div class="popup-addr" id="popup-addr-' + t.id + '">Locating address…</div>';
+        '<div class="popup-row">Speed ' + fmtSpeed(t.speed) + ' • Accuracy ' + fmtAccuracy(t.accuracy) + '</div>' +
+        '<div class="popup-addr" id="popup-addr-' + t.id + '">Locating address…</div>' +
+        '<div class="popup-actions"><a target="_blank" rel="noopener" href="' + mapsUrl + '">Open Maps</a></div>';
 
       if (markers[t.id]) {
         markers[t.id].setLatLng([t.lat, t.lng]);
@@ -386,8 +671,14 @@
 
   function renderAll(trackers) {
     lastTrackers = trackers;
-    renderList(trackers);
-    renderMarkers(trackers);
+    updateStats(trackers);
+    filtered = applyFilters(trackers);
+    renderList(filtered);
+    renderMarkers(filtered);
+    if (selectedTrackerId) {
+      const selected = trackers.find(t => t.id === selectedTrackerId);
+      if (selected) showDetail(selected);
+    }
   }
 
   function watchCompanyTrackers() {
@@ -398,8 +689,15 @@
         snap.forEach(doc => {
           const d = doc.data();
           trackers.push({
-            id: doc.id, name: d.name, enabled: d.enabled !== false,
-            lat: d.lat, lng: d.lng, accuracy: d.accuracy, updatedAt: d.updatedAt
+            id: doc.id,
+            name: d.name || d.vehicleName || d.registration || doc.id,
+            enabled: d.enabled !== false,
+            lat: d.lat, lng: d.lng,
+            accuracy: d.accuracy,
+            updatedAt: toMillis(d.updatedAt),
+            speed: d.speed, heading: d.heading, battery: d.battery, ignition: d.ignition,
+            vrn: d.vrn, reg: d.reg, registration: d.registration, vehicleReg: d.vehicleReg,
+            driverName: d.driverName, driver: d.driver, assignedDriver: d.assignedDriver
           });
         });
         renderAll(trackers);
@@ -409,6 +707,29 @@
       }
     );
   }
+
+  document.getElementById('trackerSearch').addEventListener('input', () => renderAll(lastTrackers));
+  document.getElementById('statusFilter').addEventListener('change', () => renderAll(lastTrackers));
+  document.getElementById('fitFleetBtn').addEventListener('click', () => {
+    const withPos = filtered.filter(t => t.lat != null && t.lng != null);
+    if (withPos.length === 1) map.setView([withPos[0].lat, withPos[0].lng], 15);
+    if (withPos.length > 1) map.fitBounds(L.latLngBounds(withPos.map(t => [t.lat, t.lng])), { padding: [50, 50] });
+  });
+  document.getElementById('toggleMapBtn').addEventListener('click', () => {
+    if (mapMode === 'street') {
+      map.removeLayer(streetLayer); satelliteLayer.addTo(map); mapMode = 'satellite'; document.getElementById('toggleMapBtn').textContent = 'Street';
+    } else {
+      map.removeLayer(satelliteLayer); streetLayer.addTo(map); mapMode = 'street'; document.getElementById('toggleMapBtn').textContent = 'Satellite';
+    }
+  });
+  document.getElementById('exportCsvBtn').addEventListener('click', () => {
+    const rows = [['Name','Registration','Driver','Status','Latitude','Longitude','Speed','Accuracy','Battery','Ignition','Updated']]
+      .concat(filtered.map(t => [t.name, vehicleReg(t), driverName(t), statusOf(t), t.lat ?? '', t.lng ?? '', t.speed ?? '', t.accuracy ?? '', t.battery ?? '', fmtIgnition(t.ignition), toMillis(t.updatedAt) ? new Date(toMillis(t.updatedAt)).toISOString() : '']));
+    const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'fleettraxx-live-fleet.csv'; a.click(); URL.revokeObjectURL(url);
+  });
 
   auth.onAuthStateChanged(async (user) => {
     if (user) {
@@ -445,6 +766,11 @@
       }
     } else {
       if (trackersUnsub) { trackersUnsub(); trackersUnsub = null; }
+      Object.keys(markers).forEach(id => { map.removeLayer(markers[id]); delete markers[id]; });
+      trailLayer.clearLayers();
+      historyLayer.clearLayers();
+      lastTrackers = []; filtered = []; selectedTrackerId = null;
+      document.getElementById('detailPanel').classList.remove('show');
       loginView.style.display = 'flex';
       appView.classList.remove('show');
       loginBtn.disabled = false;
