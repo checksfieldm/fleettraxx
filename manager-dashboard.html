@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Fleettraxx</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --primary: #1A5FBD; --primary-h: #1450A3; --primary-xl: rgba(26,95,189,.08);
+    --gold: #E8A000; --green: #0F9B58; --green-s: rgba(15,155,88,.12);
+    --red: #D63031; --red-s: rgba(214,48,49,.1);
+    --bg: #F4F7FB; --surface: #FFFFFF; --surface2: #F8FAFD;
+    --text: #0D1B2A; --text2: #2D4059; --text3: #5A7A94; --muted: #8CA3BC;
+    --border: #E2EAF4;
+    --shadow-sm: 0 2px 8px rgba(13,27,42,.06);
+    --shadow-md: 0 8px 28px rgba(13,27,42,.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', system-ui, sans-serif; color: var(--text); overflow: hidden; }
+
+  #loginView { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .card {
+    width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; box-shadow: var(--shadow-md); padding: 32px 28px;
+  }
+  .pin-logo {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-h));
+    display: flex; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: var(--shadow-sm);
+  }
+  .pin-logo svg { width: 20px; height: 20px; }
+  h1 { font-size: 19px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 12.5px; color: var(--text3); margin-bottom: 22px; line-height: 1.5; }
+  label { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); margin-bottom: 7px; }
+  input {
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--surface2);
+    outline: none; transition: border-color 0.15s ease;
+  }
+  input:focus { border-color: var(--primary); }
+  .field { margin-bottom: 16px; }
+  button {
+    padding: 13px 18px; border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
+    background: var(--primary); color: #fff; box-shadow: 0 4px 14px rgba(26,95,189,.24);
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  button:hover { background: var(--primary-h); }
+  button:active { transform: scale(0.98); }
+  button:disabled { background: var(--muted); box-shadow: none; cursor: default; }
+  .full-btn { width: 100%; }
+  .error {
+    margin-top: 14px; background: var(--red-s); color: var(--red); border-radius: 10px;
+    padding: 11px 13px; font-size: 12.5px; display: none; line-height: 1.5;
+  }
+  .error.show { display: block; }
+
+  #appView { display: none; height: 100vh; flex-direction: column; }
+  #appView.show { display: flex; }
+
+  .topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 20;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand-icon {
+    width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--primary), var(--primary-h));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-icon svg { width: 15px; height: 15px; }
+  .brand-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand-sub { font-size: 10.5px; color: var(--text3); }
+  .signout-btn { background: var(--surface2); color: var(--text2); box-shadow: none; border: 1px solid var(--border); padding: 8px 13px; font-size: 12px; flex-shrink: 0; }
+  .signout-btn:hover { background: var(--border); }
+
+  .banner {
+    background: var(--red-s); color: var(--red); padding: 10px 20px;
+    font-size: 12.5px; line-height: 1.5; display: none; flex-shrink: 0;
+  }
+  .banner.show { display: block; }
+
+  .layout { flex: 1; display: flex; min-height: 0; }
+
+  .sidebar {
+    width: 360px; min-width: 360px; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sidebar-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .sidebar-head h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); }
+  .count-pill {
+    font-family: 'DM Mono', monospace; font-size: 10.5px; font-weight: 600; color: var(--text3);
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 9px;
+  }
+  .tracker-list { flex: 1; overflow-y: auto; padding: 10px; }
+
+  .tracker-card {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .tracker-card:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); }
+  .tracker-card.selected { border-color: var(--primary); background: var(--primary-xl); box-shadow: var(--shadow-sm); }
+  .tracker-card.is-disabled { opacity: 0.5; cursor: default; }
+  .tracker-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 3px; }
+  .tracker-name { font-size: 13.5px; font-weight: 700; }
+  .badge {
+    font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.04em;
+    padding: 3px 7px; border-radius: 5px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0;
+  }
+  .badge.online { background: var(--green-s); color: var(--green); }
+  .badge.offline { background: rgba(232,160,0,.12); color: var(--gold); }
+  .badge.disabled { background: var(--red-s); color: var(--red); }
+  .tracker-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); margin-bottom: 6px; }
+  .tracker-addr { font-size: 11.5px; color: var(--text2); line-height: 1.4; min-height: 15px; }
+  .tracker-addr.loading { color: var(--muted); font-style: italic; }
+
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 5px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(15,155,88,.45); } 70% { box-shadow: 0 0 0 6px rgba(15,155,88,0); } 100% { box-shadow: 0 0 0 0 rgba(15,155,88,0); } }
+
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--text3); font-size: 12.5px; line-height: 1.7; }
+
+  .map-wrap { flex: 1; position: relative; }
+  #map { width: 100%; height: 100%; }
+
+  .leaflet-popup-content-wrapper { border-radius: 12px !important; box-shadow: var(--shadow-md) !important; font-family: 'DM Sans', sans-serif; }
+  .popup-name { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .popup-row { font-family: 'DM Mono', monospace; font-size: 10.5px; color: var(--text3); }
+  .popup-addr { font-size: 11.5px; color: var(--text2); margin-top: 4px; line-height: 1.4; }
+
+  .marker-pin {
+    width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 8px rgba(13,27,42,.25); border: 2px solid white;
+  }
+  .marker-pin.online { background: var(--green); }
+  .marker-pin.offline { background: var(--gold); }
+  .marker-pin.disabled { background: var(--muted); }
+  .marker-pin-dot { width: 8px; height: 8px; border-radius: 50%; background: white; transform: rotate(45deg); }
+
+  @media (max-width: 760px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; min-width: 0; height: 46%; border-right: none; border-bottom: 1px solid var(--border); }
+    .map-wrap { flex: 1; min-height: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <div class="card">
+    <div class="pin-logo">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C7.6 2 4 5.6 4 10c0 5.4 7 12 8 12s8-6.6 8-12c0-4.4-3.6-8-8-8Z" fill="white" fill-opacity="0.95"/>
+        <circle cx="12" cy="10" r="3" fill="#1A5FBD"/>
+      </svg>
+    </div>
+    <h1>Fleettraxx</h1>
+    <div class="sub">Sign in to view your fleet's live locations.</div>
+    <div class="field"><label for="email">Email</label><input type="email" id="email" autocomplete="username"></div>
+    <div class="field"><label for="password">Password</label><input type="password" id="password" autocomplete="current-password"></div>
+    <button id="loginBtn" class="full-btn">Sign In</button>
+    <div class="error" id="errorBox"></div>
+  </div>
+</div>
+
+<div id="appView">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C7.6 2 4 5.6 4 10c0 5.4 7 12 8 12s8-6.6 8-12c0-4.4-3.6-8-8-8Z" fill="white" fill-opacity="0.95"/>
+          <circle cx="12" cy="10" r="3" fill="#1A5FBD"/>
+        </svg>
+      </div>
+      <div style="min-width:0;">
+        <div class="brand-name" id="companyName">Loading…</div>
+        <div class="brand-sub" id="whoEmail"></div>
+      </div>
+    </div>
+    <button class="signout-btn" id="signOutBtn">Sign Out</button>
+  </div>
+
+  <div class="banner" id="disabledBanner">Your company account is currently disabled. Contact your administrator.</div>
+
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sidebar-head"><h2>Your Fleet</h2><span class="count-pill" id="trackerCount">0</span></div>
+      <div class="tracker-list" id="trackerList"></div>
+    </div>
+    <div class="map-wrap">
+      <div id="map"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDKdhVZRgcojnPPj0mSCsp6fDa6hs_knF0",
+    authDomain: "fleettraxx.firebaseapp.com",
+    projectId: "fleettraxx",
+    storageBucket: "fleettraxx.firebasestorage.app",
+    messagingSenderId: "114706231867",
+    appId: "1:114706231867:web:aebef34f3351f43243221e"
+  };
+  firebase.initializeApp(firebaseConfig);
+  firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const loginView = document.getElementById('loginView');
+  const appView = document.getElementById('appView');
+  const loginBtn = document.getElementById('loginBtn');
+  const errorBox = document.getElementById('errorBox');
+
+  function showError(msg) { errorBox.textContent = msg; errorBox.classList.add('show'); }
+  function clearError() { errorBox.classList.remove('show'); }
+
+  loginBtn.addEventListener('click', async () => {
+    clearError();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    if (!email || !password) { showError('Enter both email and password.'); return; }
+    loginBtn.disabled = true; loginBtn.textContent = 'Signing in…';
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (e) {
+      showError('Sign in failed: ' + e.message);
+      loginBtn.disabled = false; loginBtn.textContent = 'Sign In';
+    }
+  });
+
+  document.getElementById('signOutBtn').addEventListener('click', () => auth.signOut());
+
+  // Google Maps-style tiles (same visual approach as Site Intelligence) — no API key required for this tile endpoint.
+  const map = L.map('map', { zoomControl: false }).setView([54.5, -3.5], 6);
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: '&copy; Google Maps'
+  }).addTo(map);
+
+  const markers = {};
+  let hasFitOnce = false;
+  let selectedTrackerId = null;
+  let myCompanyId = null;
+  let trackersUnsub = null;
+  let lastTrackers = [];
+  const geocodeCache = {};
+
+  function makeIcon(status) {
+    return L.divIcon({
+      className: '',
+      html: '<div class="marker-pin ' + status + '"><div class="marker-pin-dot"></div></div>',
+      iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30]
+    });
+  }
+
+  function timeAgo(ms) {
+    if (!ms) return 'never reported';
+    const s = Math.round((Date.now() - ms) / 1000);
+    if (s < 60) return s + 's ago';
+    const m = Math.round(s / 60);
+    if (m < 60) return m + 'm ago';
+    const h = Math.round(m / 60);
+    return h + 'h ago';
+  }
+
+  function statusOf(t) {
+    if (!t.enabled) return 'disabled';
+    if (t.updatedAt && (Date.now() - t.updatedAt < 60000)) return 'online';
+    return 'offline';
+  }
+  function statusLabel(status) { return status === 'online' ? 'Live' : status === 'offline' ? 'Offline' : 'Disabled'; }
+
+  async function reverseGeocode(trackerId, lat, lng) {
+    const cached = geocodeCache[trackerId];
+    if (cached && Math.abs(cached.lat - lat) < 0.0008 && Math.abs(cached.lng - lng) < 0.0008) {
+      return cached.address;
+    }
+    try {
+      const res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lng + '&zoom=17');
+      const data = await res.json();
+      const address = data && data.display_name ? data.display_name : 'Address unavailable';
+      geocodeCache[trackerId] = { lat, lng, address };
+      return address;
+    } catch (e) {
+      return 'Address lookup failed';
+    }
+  }
+
+  function flyToTracker(t) {
+    if (t.lat == null || t.lng == null) return;
+    selectedTrackerId = t.id;
+    map.flyTo([t.lat, t.lng], 15, { duration: 0.6 });
+    if (markers[t.id]) markers[t.id].openPopup();
+    renderList(lastTrackers);
+  }
+
+  function renderList(trackers) {
+    const listEl = document.getElementById('trackerList');
+    document.getElementById('trackerCount').textContent = trackers.length;
+
+    if (trackers.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">No trackers have been assigned to your company yet.<br>Contact your administrator.</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    trackers.forEach(t => {
+      const status = statusOf(t);
+      const card = document.createElement('div');
+      card.className = 'tracker-card' + (status === 'disabled' ? ' is-disabled' : '') + (selectedTrackerId === t.id ? ' selected' : '');
+
+      const addrId = 'addr-' + t.id;
+      let addrHtml = '<div class="tracker-addr loading" id="' + addrId + '">Locating address…</div>';
+      if (t.lat == null || t.lng == null) {
+        addrHtml = '<div class="tracker-addr" id="' + addrId + '">No position reported yet.</div>';
+      }
+
+      card.innerHTML =
+        '<div class="tracker-top"><div class="tracker-name">' + t.name + '</div>' +
+        '<span class="badge ' + status + '">' + statusLabel(status) + '</span></div>' +
+        '<div class="tracker-meta">' + (status === 'online' ? '<span class="dot"></span>' : '') + timeAgo(t.updatedAt) + '</div>' +
+        addrHtml;
+
+      card.addEventListener('click', () => flyToTracker(t));
+      listEl.appendChild(card);
+
+      if (t.lat != null && t.lng != null) {
+        reverseGeocode(t.id, t.lat, t.lng).then(address => {
+          const el = document.getElementById(addrId);
+          if (el) { el.textContent = address; el.classList.remove('loading'); }
+        });
+      }
+    });
+  }
+
+  function renderMarkers(trackers) {
+    const seen = new Set();
+    trackers.forEach(t => {
+      if (t.lat == null || t.lng == null) return;
+      seen.add(t.id);
+      const status = statusOf(t);
+      const popupHtml =
+        '<div class="popup-name">' + t.name + '</div>' +
+        '<div class="popup-row">' + t.lat.toFixed(6) + ', ' + t.lng.toFixed(6) + '</div>' +
+        '<div class="popup-row">Updated ' + timeAgo(t.updatedAt) + '</div>' +
+        '<div class="popup-addr" id="popup-addr-' + t.id + '">Locating address…</div>';
+
+      if (markers[t.id]) {
+        markers[t.id].setLatLng([t.lat, t.lng]);
+        markers[t.id].setIcon(makeIcon(status));
+        markers[t.id].setPopupContent(popupHtml);
+      } else {
+        markers[t.id] = L.marker([t.lat, t.lng], { icon: makeIcon(status) }).addTo(map).bindPopup(popupHtml);
+      }
+
+      reverseGeocode(t.id, t.lat, t.lng).then(address => {
+        const el = document.getElementById('popup-addr-' + t.id);
+        if (el) el.textContent = address;
+      });
+    });
+    Object.keys(markers).forEach(id => {
+      if (!seen.has(id)) { map.removeLayer(markers[id]); delete markers[id]; }
+    });
+
+    if (!hasFitOnce) {
+      const withPos = trackers.filter(t => t.lat != null && t.lng != null);
+      if (withPos.length > 0) {
+        hasFitOnce = true;
+        if (withPos.length === 1) {
+          map.setView([withPos[0].lat, withPos[0].lng], 15);
+        } else {
+          map.fitBounds(L.latLngBounds(withPos.map(t => [t.lat, t.lng])), { padding: [50, 50] });
+        }
+      }
+    }
+  }
+
+  function renderAll(trackers) {
+    lastTrackers = trackers;
+    renderList(trackers);
+    renderMarkers(trackers);
+  }
+
+  function watchCompanyTrackers() {
+    if (trackersUnsub) trackersUnsub();
+    trackersUnsub = db.collection('trackers').where('companyId', '==', myCompanyId).onSnapshot(
+      snap => {
+        const trackers = [];
+        snap.forEach(doc => {
+          const d = doc.data();
+          trackers.push({
+            id: doc.id, name: d.name, enabled: d.enabled !== false,
+            lat: d.lat, lng: d.lng, accuracy: d.accuracy, updatedAt: d.updatedAt
+          });
+        });
+        renderAll(trackers);
+      },
+      err => {
+        document.getElementById('trackerList').innerHTML = '<div class="empty-state">Could not load trackers: ' + err.message + '</div>';
+      }
+    );
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      try {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (!userDoc.exists || userDoc.data().role !== 'company') {
+          alert('This account is not set up as a company login. Signing out.');
+          auth.signOut();
+          return;
+        }
+        const userData = userDoc.data();
+        myCompanyId = userData.companyId;
+
+        loginView.style.display = 'none';
+        appView.classList.add('show');
+        setTimeout(() => map.invalidateSize(), 100);
+        document.getElementById('whoEmail').textContent = user.email;
+
+        const companyDoc = await db.collection('companies').doc(myCompanyId).get();
+        const companyData = companyDoc.exists ? companyDoc.data() : null;
+        document.getElementById('companyName').textContent = companyData ? companyData.name : 'Unknown company';
+
+        const isDisabled = userData.active === false || (companyData && companyData.enabled === false);
+        document.getElementById('disabledBanner').classList.toggle('show', isDisabled);
+
+        if (!isDisabled) {
+          watchCompanyTrackers();
+        } else {
+          document.getElementById('trackerList').innerHTML = '';
+        }
+      } catch (e) {
+        showError('Could not load your account: ' + e.message);
+        auth.signOut();
+      }
+    } else {
+      if (trackersUnsub) { trackersUnsub(); trackersUnsub = null; }
+      loginView.style.display = 'flex';
+      appView.classList.remove('show');
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Sign In';
+    }
+  });
+</script>
+
+</body>
+</html>

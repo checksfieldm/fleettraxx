@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Fleettraxx Device</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  :root {
+    --primary: #1A5FBD; --primary-h: #1450A3; --primary-xl: rgba(26,95,189,.08);
+    --gold: #E8A000; --green: #0F9B58; --green-s: rgba(15,155,88,.12);
+    --red: #D63031; --red-s: rgba(214,48,49,.1);
+    --bg: #F4F7FB; --surface: #FFFFFF; --surface2: #F8FAFD;
+    --text: #0D1B2A; --text2: #2D4059; --text3: #5A7A94; --muted: #8CA3BC;
+    --border: #E2EAF4;
+    --shadow-sm: 0 2px 8px rgba(13,27,42,.06);
+    --shadow-md: 0 8px 28px rgba(13,27,42,.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; background: var(--bg); font-family: 'DM Sans', system-ui, sans-serif; color: var(--text); }
+  body { display: flex; align-items: center; justify-content: center; padding: 24px; min-height: 100vh; }
+  .card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow-md); padding: 32px 28px; }
+  .pin-logo { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--primary-h)); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+  .pin-logo svg { width: 20px; height: 20px; }
+  h1 { font-size: 19px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 12.5px; color: var(--text3); margin-bottom: 22px; line-height: 1.5; }
+  label { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); margin-bottom: 7px; }
+  input, select { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--surface2); outline: none; transition: border-color 0.15s ease; }
+  input:focus, select:focus { border-color: var(--primary); }
+  .field { margin-bottom: 16px; }
+  button { width: 100%; padding: 14px; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; background: var(--primary); color: #fff; box-shadow: 0 4px 14px rgba(26,95,189,.24); transition: background 0.15s ease, transform 0.1s ease; }
+  button:hover { background: var(--primary-h); }
+  button:active { transform: scale(0.98); }
+  button:disabled { background: var(--muted); box-shadow: none; cursor: default; }
+  .error { margin-top: 14px; background: var(--red-s); color: var(--red); border-radius: 10px; padding: 11px 13px; font-size: 12.5px; display: none; line-height: 1.5; }
+  .error.show { display: block; }
+  .signout-link { display: block; text-align: center; margin-top: 16px; font-size: 12px; color: var(--text3); cursor: pointer; text-decoration: underline; }
+
+  #appView { display: none; }
+  #appView.show { display: block; }
+  .who { text-align: center; margin-bottom: 22px; }
+  .who-company { font-size: 13px; font-weight: 700; }
+  .who-email { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  .tracker-select-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s ease; }
+  .tracker-select-card:hover { border-color: var(--primary); }
+  .tracker-select-card .name { font-size: 14px; font-weight: 700; }
+  .tracker-select-card .meta { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 3px; }
+
+  .active-card { text-align: center; }
+  .active-name { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .active-meta { font-size: 12px; color: var(--text3); margin-bottom: 24px; }
+  .status-ring {
+    width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 20px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface2); border: 3px solid var(--border);
+  }
+  .status-ring.live { border-color: var(--green); background: var(--green-s); }
+  .status-ring svg { width: 44px; height: 44px; }
+  .status-text { font-size: 13px; font-weight: 700; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .status-text.live { color: var(--green); }
+  .last-sent { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); margin-bottom: 22px; }
+  .stop-btn { background: var(--red-s); color: var(--red); box-shadow: none; }
+  .stop-btn:hover { background: rgba(214,48,49,.18); }
+  .back-link { display: block; text-align: center; margin-top: 16px; font-size: 12px; color: var(--text3); cursor: pointer; text-decoration: underline; }
+  .disabled-note { text-align: center; color: var(--red); font-size: 12.5px; background: var(--red-s); border-radius: 10px; padding: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <div class="card">
+    <div class="pin-logo">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.4 7 12 8 12s8-6.6 8-12c0-4.4-3.6-8-8-8Z" fill="white" fill-opacity="0.95"/><circle cx="12" cy="10" r="3" fill="#1A5FBD"/></svg>
+    </div>
+    <h1>Fleettraxx Device</h1>
+    <div class="sub">This is the app that goes on the vehicle/device being tracked. Sign in with your company login.</div>
+    <div class="field"><label for="email">Email</label><input type="email" id="email" autocomplete="username"></div>
+    <div class="field"><label for="password">Password</label><input type="password" id="password" autocomplete="current-password"></div>
+    <button id="loginBtn">Sign In</button>
+    <div class="error" id="errorBox"></div>
+  </div>
+</div>
+
+<div id="appView">
+  <div class="card">
+    <div class="who">
+      <div class="who-company" id="companyName">Loading…</div>
+      <div class="who-email" id="whoEmail"></div>
+    </div>
+
+    <div id="disabledView" style="display:none;">
+      <div class="disabled-note">Your company account is currently disabled. Contact your administrator.</div>
+    </div>
+
+    <div id="pickerView" style="display:none;">
+      <div id="pickerList"></div>
+    </div>
+
+    <div id="activeView" style="display:none;">
+      <div class="active-card">
+        <div class="status-ring" id="statusRing">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8CA3BC" stroke-width="1.8" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.4 7 12 8 12s8-6.6 8-12c0-4.4-3.6-8-8-8Z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="active-name" id="activeName"></div>
+        <div class="status-text" id="statusText">Not Reporting</div>
+        <div class="last-sent" id="lastSent"></div>
+        <button id="toggleBtn">Start Tracking</button>
+        <div class="back-link" id="backLink">Choose a different tracker</div>
+      </div>
+    </div>
+
+    <div class="signout-link" id="signOutLink">Sign Out</div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDKdhVZRgcojnPPj0mSCsp6fDa6hs_knF0",
+    authDomain: "fleettraxx.firebaseapp.com",
+    projectId: "fleettraxx",
+    storageBucket: "fleettraxx.firebasestorage.app",
+    messagingSenderId: "114706231867",
+    appId: "1:114706231867:web:aebef34f3351f43243221e"
+  };
+  firebase.initializeApp(firebaseConfig);
+  firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const loginView = document.getElementById('loginView');
+  const appView = document.getElementById('appView');
+  const loginBtn = document.getElementById('loginBtn');
+  const errorBox = document.getElementById('errorBox');
+
+  function showError(msg) { errorBox.textContent = msg; errorBox.classList.add('show'); }
+  function clearError() { errorBox.classList.remove('show'); }
+
+  loginBtn.addEventListener('click', async () => {
+    clearError();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    if (!email || !password) { showError('Enter both email and password.'); return; }
+    loginBtn.disabled = true; loginBtn.textContent = 'Signing in…';
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (e) {
+      showError('Sign in failed: ' + e.message);
+      loginBtn.disabled = false; loginBtn.textContent = 'Sign In';
+    }
+  });
+
+  document.getElementById('signOutLink').addEventListener('click', () => { stopTracking(); auth.signOut(); });
+  document.getElementById('backLink').addEventListener('click', () => {
+    stopTracking();
+    document.getElementById('activeView').style.display = 'none';
+    document.getElementById('pickerView').style.display = 'block';
+  });
+
+  let myCompanyId = null;
+  let watchId = null;
+  let selectedTracker = null;
+  let lastWriteTime = 0;
+  const WRITE_INTERVAL_MS = 8000;
+
+  function stopTracking() {
+    if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+    updateStatusUI(false);
+  }
+
+  function updateStatusUI(isLive, lastSentText) {
+    const ring = document.getElementById('statusRing');
+    const text = document.getElementById('statusText');
+    const btn = document.getElementById('toggleBtn');
+    ring.classList.toggle('live', isLive);
+    text.classList.toggle('live', isLive);
+    text.textContent = isLive ? 'Reporting Live' : 'Not Reporting';
+    btn.textContent = isLive ? 'Stop Tracking' : 'Start Tracking';
+    btn.className = isLive ? 'stop-btn' : '';
+    if (lastSentText) document.getElementById('lastSent').textContent = lastSentText;
+  }
+
+  document.getElementById('toggleBtn').addEventListener('click', () => {
+    if (watchId !== null) { stopTracking(); return; }
+    if (!navigator.geolocation) { alert('Geolocation not supported on this device/browser.'); return; }
+    lastWriteTime = 0;
+    watchId = navigator.geolocation.watchPosition(
+      onPosition,
+      (err) => alert('Location error: ' + err.message + '. Ensure location permission is granted and this page is loaded over https://.'),
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    );
+    updateStatusUI(true);
+  });
+
+  async function onPosition(pos) {
+    const now = Date.now();
+    if (now - lastWriteTime < WRITE_INTERVAL_MS) return;
+    lastWriteTime = now;
+    try {
+      await db.collection('trackers').doc(selectedTracker.id).update({
+        lat: pos.coords.latitude, lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy, speed: pos.coords.speed, heading: pos.coords.heading,
+        updatedAt: Date.now()
+      });
+      updateStatusUI(true, 'Last sent ' + new Date().toLocaleTimeString());
+    } catch (e) {
+      console.error('Write failed', e);
+    }
+  }
+
+  function selectTracker(t) {
+    selectedTracker = t;
+    document.getElementById('pickerView').style.display = 'none';
+    document.getElementById('activeView').style.display = 'block';
+    document.getElementById('activeName').textContent = t.name;
+    updateStatusUI(false);
+  }
+
+  function renderPicker(trackers) {
+    const list = document.getElementById('pickerList');
+    const enabledTrackers = trackers.filter(t => t.enabled);
+    if (enabledTrackers.length === 0) {
+      list.innerHTML = '<div class="disabled-note">No active trackers assigned to your company yet. Contact your administrator.</div>';
+      return;
+    }
+    if (enabledTrackers.length === 1) {
+      selectTracker(enabledTrackers[0]);
+      return;
+    }
+    list.innerHTML = '<label style="margin-bottom:10px;">Which tracker is this device?</label>';
+    enabledTrackers.forEach(t => {
+      const card = document.createElement('div');
+      card.className = 'tracker-select-card';
+      card.innerHTML = '<div class="name">' + t.name + '</div><div class="meta">Tap to select</div>';
+      card.addEventListener('click', () => selectTracker(t));
+      list.appendChild(card);
+    });
+    document.getElementById('pickerView').style.display = 'block';
+    document.getElementById('activeView').style.display = 'none';
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      try {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (!userDoc.exists || userDoc.data().role !== 'company') {
+          alert('This account is not set up as a company login. Signing out.');
+          auth.signOut();
+          return;
+        }
+        const userData = userDoc.data();
+        myCompanyId = userData.companyId;
+
+        loginView.style.display = 'none';
+        appView.classList.add('show');
+        document.getElementById('whoEmail').textContent = user.email;
+
+        const companyDoc = await db.collection('companies').doc(myCompanyId).get();
+        const companyData = companyDoc.exists ? companyDoc.data() : null;
+        document.getElementById('companyName').textContent = companyData ? companyData.name : 'Unknown company';
+
+        const isDisabled = userData.active === false || (companyData && companyData.enabled === false);
+        document.getElementById('disabledView').style.display = isDisabled ? 'block' : 'none';
+        if (isDisabled) return;
+
+        const trackersSnap = await db.collection('trackers').where('companyId', '==', myCompanyId).get();
+        const trackers = [];
+        trackersSnap.forEach(doc => {
+          const d = doc.data();
+          trackers.push({ id: doc.id, name: d.name, enabled: d.enabled !== false });
+        });
+        renderPicker(trackers);
+      } catch (e) {
+        showError('Could not load your account: ' + e.message);
+        auth.signOut();
+      }
+    } else {
+      stopTracking();
+      loginView.style.display = 'flex';
+      appView.classList.remove('show');
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Sign In';
+    }
+  });
+</script>
+
+</body>
+</html>
