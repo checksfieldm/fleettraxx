@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleettraxx Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --primary: #1A5FBD; --primary-h: #1450A3; --primary-xl: rgba(26,95,189,.08);
+    --gold: #E8A000; --green: #0F9B58; --green-s: rgba(15,155,88,.12);
+    --red: #D63031; --red-s: rgba(214,48,49,.1);
+    --bg: #F4F7FB; --surface: #FFFFFF; --surface2: #F8FAFD;
+    --text: #0D1B2A; --text2: #2D4059; --text3: #5A7A94; --muted: #8CA3BC;
+    --border: #E2EAF4;
+    --shadow-sm: 0 2px 8px rgba(13,27,42,.06);
+    --shadow-md: 0 8px 28px rgba(13,27,42,.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', system-ui, sans-serif; color: var(--text); }
+
+  /* ---------- Login screen ---------- */
+  #loginView {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .card {
+    width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; box-shadow: var(--shadow-md); padding: 32px 28px;
+  }
+  .pin {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-h));
+    display: flex; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: var(--shadow-sm);
+  }
+  .pin svg { width: 20px; height: 20px; }
+  h1 { font-size: 19px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 12.5px; color: var(--text3); margin-bottom: 22px; }
+  label { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); margin-bottom: 7px; }
+  input, select {
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--surface2);
+    outline: none; transition: border-color 0.15s ease;
+  }
+  input:focus, select:focus { border-color: var(--primary); }
+  .field { margin-bottom: 16px; }
+  button {
+    padding: 12px 18px; border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer;
+    background: var(--primary); color: #fff; box-shadow: 0 4px 14px rgba(26,95,189,.24);
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  button:hover { background: var(--primary-h); }
+  button:active { transform: scale(0.98); }
+  button:disabled { background: var(--muted); box-shadow: none; cursor: default; }
+  .full-btn { width: 100%; }
+  .error {
+    margin-top: 14px; background: var(--red-s); color: var(--red); border-radius: 10px;
+    padding: 11px 13px; font-size: 12.5px; display: none; line-height: 1.5;
+  }
+  .error.show { display: block; }
+
+  /* ---------- Admin panel ---------- */
+  #panelView { display: none; min-height: 100vh; }
+  #panelView.show { display: block; }
+
+  .topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-h));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-icon svg { width: 15px; height: 15px; }
+  .brand-name { font-size: 15px; font-weight: 700; }
+  .who { display: flex; align-items: center; gap: 14px; }
+  .who-email { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); }
+  .signout-btn { background: var(--surface2); color: var(--text2); box-shadow: none; border: 1px solid var(--border); padding: 9px 14px; font-size: 12.5px; }
+  .signout-btn:hover { background: var(--border); }
+
+  .content { max-width: 1000px; margin: 0 auto; padding: 32px 28px; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+  .tab-btn {
+    background: var(--surface); color: var(--text3); border: 1px solid var(--border);
+    box-shadow: none; padding: 10px 18px; font-size: 13px;
+  }
+  .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  .panel-section { display: none; }
+  .panel-section.active { display: block; }
+
+  .add-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px 22px; margin-bottom: 20px; box-shadow: var(--shadow-sm);
+  }
+  .add-card h3 { font-size: 13.5px; font-weight: 700; margin-bottom: 14px; }
+  .add-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .add-row .field { margin-bottom: 0; flex: 1; min-width: 180px; }
+
+  .list-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    overflow: hidden; box-shadow: var(--shadow-sm);
+  }
+  .list-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 22px; border-bottom: 1px solid var(--border); background: var(--surface2);
+  }
+  .list-head h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text3); }
+  .count-pill {
+    font-family: 'DM Mono', monospace; font-size: 10.5px; font-weight: 600; color: var(--text3);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 4px 9px;
+  }
+  .row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px; border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: none; }
+  .row-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .row-icon {
+    width: 34px; height: 34px; border-radius: 10px; background: var(--primary-xl);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .row-icon svg { width: 16px; height: 16px; }
+  .row-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .row-meta { font-family: 'DM Mono', monospace; font-size: 10.5px; color: var(--text3); margin-top: 2px; }
+  .badge {
+    font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.04em;
+    padding: 3px 8px; border-radius: 5px; text-transform: uppercase;
+  }
+  .badge.online { background: var(--green-s); color: var(--green); }
+  .badge.waiting { background: rgba(232,160,0,.12); color: var(--gold); }
+  .badge.enabled { background: var(--green-s); color: var(--green); }
+  .badge.disabled { background: var(--red-s); color: var(--red); }
+  .delete-btn {
+    background: var(--red-s); color: var(--red); box-shadow: none; padding: 7px 12px; font-size: 11.5px;
+  }
+  .delete-btn:hover { background: rgba(214,48,49,.18); }
+  .toggle-btn {
+    box-shadow: none; padding: 7px 12px; font-size: 11.5px; border: 1px solid var(--border);
+  }
+  .toggle-btn.to-disable { background: var(--red-s); color: var(--red); }
+  .toggle-btn.to-disable:hover { background: rgba(214,48,49,.18); }
+  .toggle-btn.to-enable { background: var(--green-s); color: var(--green); }
+  .toggle-btn.to-enable:hover { background: rgba(15,155,88,.2); }
+  .row.is-disabled { opacity: 0.55; }
+  .empty-row { padding: 30px 22px; text-align: center; color: var(--text3); font-size: 12.5px; }
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <div class="card">
+    <div class="pin">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C7.6 2 4 5.6 4 10c0 5.4 7 12 8 12s8-6.6 8-12c0-4.4-3.6-8-8-8Z" fill="white" fill-opacity="0.95"/>
+        <circle cx="12" cy="10" r="3" fill="#1A5FBD"/>
+      </svg>
+    </div>
+    <h1>Fleettraxx Admin</h1>
+    <div class="sub">Sign in to manage companies and trackers.</div>
+    <div class="field"><label for="email">Email</label><input type="email" id="email" autocomplete="username"></div>
+    <div class="field"><label for="password">Password</label><input type="password" id="password" autocomplete="current-password"></div>
+    <button id="loginBtn" class="full-btn">Sign In</button>
+    <div class="error" id="errorBox"></div>
+  </div>
+</div>
+
+<div id="panelView">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C7.6 2 4 5.6 4 10c0 5.4 7 12 8 12s8-6.6 8-12c0-4.4-3.6-8-8-8Z" fill="white" fill-opacity="0.95"/>
+          <circle cx="12" cy="10" r="3" fill="#1A5FBD"/>
+        </svg>
+      </div>
+      <div class="brand-name">Fleettraxx Admin</div>
+    </div>
+    <div class="who">
+      <span class="who-email" id="whoEmail"></span>
+      <button class="signout-btn" id="signOutBtn">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="companies">Companies</button>
+      <button class="tab-btn" data-tab="trackers">Trackers</button>
+    </div>
+
+    <!-- Companies -->
+    <div class="panel-section active" id="section-companies">
+      <div class="add-card">
+        <h3>Add a company</h3>
+        <div class="add-row">
+          <div class="field"><label for="companyName">Company name</label><input type="text" id="companyName" placeholder="e.g. Acme Logistics"></div>
+        </div>
+        <div class="add-row" style="margin-top:12px;">
+          <div class="field"><label for="companyEmail">Login email for this company</label><input type="email" id="companyEmail" placeholder="e.g. acme@example.com"></div>
+          <div class="field">
+            <label for="companyPassword">Login password</label>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="companyPassword" placeholder="Click Generate →" style="flex:1;">
+              <button type="button" id="genPasswordBtn" style="background:var(--surface2); color:var(--text2); border:1px solid var(--border); box-shadow:none; white-space:nowrap;">Generate</button>
+            </div>
+          </div>
+        </div>
+        <div class="add-row" style="margin-top:14px;">
+          <button id="addCompanyBtn">Add Company &amp; Create Login</button>
+        </div>
+        <div id="companyResult" style="display:none; margin-top:14px; background:var(--green-s); border-radius:10px; padding:14px 16px; font-size:12.5px; color:var(--text2); line-height:1.7;"></div>
+      </div>
+      <div class="list-card">
+        <div class="list-head"><h3>All Companies</h3><span class="count-pill" id="companyCount">0</span></div>
+        <div id="companyList"><div class="empty-row">No companies yet — add one above.</div></div>
+      </div>
+    </div>
+
+    <!-- Trackers -->
+    <div class="panel-section" id="section-trackers">
+      <div class="add-card">
+        <h3>Register a tracker</h3>
+        <div class="add-row">
+          <div class="field"><label for="trackerName">Device name / ID</label><input type="text" id="trackerName" placeholder="e.g. Mark's iPhone"></div>
+          <div class="field"><label for="trackerCompany">Assign to company</label><select id="trackerCompany"><option value="">Select a company…</option></select></div>
+          <button id="addTrackerBtn">Add Tracker</button>
+        </div>
+      </div>
+      <div class="list-card">
+        <div class="list-head"><h3>All Trackers</h3><span class="count-pill" id="trackerCount">0</span></div>
+        <div id="trackerList"><div class="empty-row">No trackers yet — register one above.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDKdhVZRgcojnPPj0mSCsp6fDa6hs_knF0",
+    authDomain: "fleettraxx.firebaseapp.com",
+    projectId: "fleettraxx",
+    storageBucket: "fleettraxx.firebasestorage.app",
+    messagingSenderId: "114706231867",
+    appId: "1:114706231867:web:aebef34f3351f43243221e"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const loginView = document.getElementById('loginView');
+  const panelView = document.getElementById('panelView');
+  const loginBtn = document.getElementById('loginBtn');
+  const errorBox = document.getElementById('errorBox');
+
+  function showError(msg) { errorBox.textContent = msg; errorBox.classList.add('show'); }
+  function clearError() { errorBox.classList.remove('show'); }
+
+  loginBtn.addEventListener('click', async () => {
+    clearError();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    if (!email || !password) { showError('Enter both email and password.'); return; }
+    loginBtn.disabled = true; loginBtn.textContent = 'Signing in…';
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (e) {
+      showError('Sign in failed: ' + e.message);
+      loginBtn.disabled = false; loginBtn.textContent = 'Sign In';
+    }
+  });
+
+  document.getElementById('signOutBtn').addEventListener('click', () => auth.signOut());
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel-section').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('section-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  const companyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="#1A5FBD" stroke-width="1.8" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1"/></svg>';
+  const trackerIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="#1A5FBD" stroke-width="1.8" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.4 7 12 8 12s8-6.6 8-12c0-4.4-3.6-8-8-8Z"/><circle cx="12" cy="10" r="3"/></svg>';
+
+  let companiesCache = [];
+
+  function timeAgo(ms) {
+    if (!ms) return 'never reported';
+    const s = Math.round((Date.now() - ms) / 1000);
+    if (s < 60) return s + 's ago';
+    const m = Math.round(s / 60);
+    if (m < 60) return m + 'm ago';
+    const h = Math.round(m / 60);
+    return h + 'h ago';
+  }
+
+  // ---- Companies ----
+  document.getElementById('genPasswordBtn').addEventListener('click', () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let pw = '';
+    for (let i = 0; i < 10; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+    document.getElementById('companyPassword').value = pw;
+  });
+
+  document.getElementById('addCompanyBtn').addEventListener('click', async () => {
+    const nameInput = document.getElementById('companyName');
+    const emailInput = document.getElementById('companyEmail');
+    const passwordInput = document.getElementById('companyPassword');
+    const resultBox = document.getElementById('companyResult');
+
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!name) { alert('Enter a company name.'); return; }
+    if (!email) { alert('Enter a login email for this company.'); return; }
+    if (!password || password.length < 6) { alert('Enter or generate a password (at least 6 characters).'); return; }
+
+    const btn = document.getElementById('addCompanyBtn');
+    btn.disabled = true;
+    btn.textContent = 'Creating…';
+    resultBox.style.display = 'none';
+
+    // Use a temporary secondary Firebase connection so creating the new login
+    // doesn't sign the admin out of their own session.
+    const secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary-' + Date.now());
+    try {
+      // 1. Create the company record
+      const companyRef = await db.collection('companies').add({ name: name, enabled: true, createdAt: Date.now() });
+
+      // 2. Create the login on the secondary connection
+      const secondaryAuth = secondaryApp.auth();
+      const cred = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+      const newUid = cred.user.uid;
+      await secondaryAuth.signOut();
+
+      // 3. Link that login to the company via the main (admin) connection
+      await db.collection('users').doc(newUid).set({
+        role: 'company',
+        companyId: companyRef.id,
+        email: email,
+        active: true,
+        createdAt: Date.now()
+      });
+
+      resultBox.style.display = 'block';
+      resultBox.innerHTML =
+        '<strong>Company created.</strong><br>Login email: <b>' + email + '</b><br>Password: <b>' + password + '</b><br>' +
+        'Save these now and pass them to the company — the password will not be shown again.';
+
+      nameInput.value = ''; emailInput.value = ''; passwordInput.value = '';
+    } catch (e) {
+      alert('Could not add company:\n\n' + e.code + '\n' + e.message);
+      console.error('Add company failed', e);
+    } finally {
+      await secondaryApp.delete();
+      btn.disabled = false;
+      btn.textContent = 'Add Company & Create Login';
+    }
+  });
+
+  db.collection('companies').orderBy('createdAt', 'desc').onSnapshot(snap => {
+    companiesCache = [];
+    const listEl = document.getElementById('companyList');
+    document.getElementById('companyCount').textContent = snap.size;
+    const select = document.getElementById('trackerCompany');
+    const currentSelection = select.value;
+    select.innerHTML = '<option value="">Select a company…</option>';
+
+    if (snap.empty) {
+      listEl.innerHTML = '<div class="empty-row">No companies yet — add one above.</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    snap.forEach(doc => {
+      const d = doc.data();
+      const isEnabled = d.enabled !== false;
+      companiesCache.push({ id: doc.id, name: d.name, enabled: isEnabled });
+
+      const opt = document.createElement('option');
+      opt.value = doc.id; opt.textContent = d.name + (isEnabled ? '' : ' (disabled)');
+      select.appendChild(opt);
+
+      const row = document.createElement('div');
+      row.className = 'row' + (isEnabled ? '' : ' is-disabled');
+      row.innerHTML =
+        '<div class="row-left"><div class="row-icon">' + companyIcon + '</div>' +
+        '<div><div class="row-name">' + d.name + '</div><div class="row-meta">ID: ' + doc.id.slice(0, 8) + '…</div></div></div>' +
+        '<div style="display:flex; align-items:center; gap:10px;">' +
+        '<span class="badge ' + (isEnabled ? 'enabled' : 'disabled') + '">' + (isEnabled ? 'enabled' : 'disabled') + '</span>' +
+        '<button class="toggle-btn ' + (isEnabled ? 'to-disable' : 'to-enable') + '" data-id="' + doc.id + '">' + (isEnabled ? 'Disable' : 'Enable') + '</button></div>';
+      row.querySelector('.toggle-btn').addEventListener('click', async () => {
+        const newState = !isEnabled;
+        const confirmMsg = newState
+          ? 'Re-enable "' + d.name + '"? Their login and trackers will work again.'
+          : 'Disable "' + d.name + '"? Their login will be blocked from reading or reporting any data until re-enabled.';
+        if (!confirm(confirmMsg)) return;
+        try {
+          await db.collection('companies').doc(doc.id).update({ enabled: newState });
+          // Keep the login's own active flag in sync with the company state
+          const linkedUsers = await db.collection('users').where('companyId', '==', doc.id).get();
+          const updates = [];
+          linkedUsers.forEach(u => {
+            updates.push(db.collection('users').doc(u.id).update({ active: newState }));
+          });
+          await Promise.all(updates);
+        } catch (e) {
+          alert('Could not update company:\n\n' + e.code + '\n' + e.message);
+          console.error('Toggle company failed', e);
+        }
+      });
+      listEl.appendChild(row);
+    });
+    if (currentSelection) select.value = currentSelection;
+  });
+
+  // ---- Trackers ----
+  document.getElementById('addTrackerBtn').addEventListener('click', async () => {
+    const nameInput = document.getElementById('trackerName');
+    const companySelect = document.getElementById('trackerCompany');
+    const name = nameInput.value.trim();
+    const companyId = companySelect.value;
+    if (!name) { alert('Enter a device name.'); return; }
+    if (!companyId) { alert('Select a company to assign this tracker to.'); return; }
+    const btn = document.getElementById('addTrackerBtn');
+    btn.disabled = true;
+    try {
+      await db.collection('trackers').add({
+        name: name,
+        companyId: companyId,
+        enabled: true,
+        lat: null, lng: null, updatedAt: null,
+        createdAt: Date.now()
+      });
+      nameInput.value = '';
+      companySelect.value = '';
+    } catch (e) {
+      alert('Could not add tracker:\n\n' + e.code + '\n' + e.message);
+      console.error('Add tracker failed', e);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  db.collection('trackers').orderBy('createdAt', 'desc').onSnapshot(snap => {
+    const listEl = document.getElementById('trackerList');
+    document.getElementById('trackerCount').textContent = snap.size;
+    if (snap.empty) {
+      listEl.innerHTML = '<div class="empty-row">No trackers yet — register one above.</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    snap.forEach(doc => {
+      const d = doc.data();
+      const company = companiesCache.find(c => c.id === d.companyId);
+      const companyName = company ? company.name : 'Unassigned';
+      const isOnline = d.updatedAt && (Date.now() - d.updatedAt < 60000);
+      const isEnabled = d.enabled !== false;
+
+      const row = document.createElement('div');
+      row.className = 'row' + (isEnabled ? '' : ' is-disabled');
+      row.innerHTML =
+        '<div class="row-left"><div class="row-icon">' + trackerIcon + '</div>' +
+        '<div><div class="row-name">' + d.name + '</div><div class="row-meta">' + companyName + ' &middot; ' + timeAgo(d.updatedAt) + '</div></div></div>' +
+        '<div style="display:flex; align-items:center; gap:10px;">' +
+        '<span class="badge ' + (isOnline ? 'online' : 'waiting') + '">' + (isOnline ? 'reporting' : 'no data') + '</span>' +
+        '<span class="badge ' + (isEnabled ? 'enabled' : 'disabled') + '">' + (isEnabled ? 'enabled' : 'disabled') + '</span>' +
+        '<button class="toggle-btn ' + (isEnabled ? 'to-disable' : 'to-enable') + '" data-id="' + doc.id + '">' + (isEnabled ? 'Disable' : 'Enable') + '</button></div>';
+      row.querySelector('.toggle-btn').addEventListener('click', async () => {
+        const newState = !isEnabled;
+        const confirmMsg = newState
+          ? 'Re-enable tracker "' + d.name + '"?'
+          : 'Disable tracker "' + d.name + '"? It will stop being able to report its position until re-enabled.';
+        if (!confirm(confirmMsg)) return;
+        try {
+          await db.collection('trackers').doc(doc.id).update({ enabled: newState });
+        } catch (e) {
+          alert('Could not update tracker:\n\n' + e.code + '\n' + e.message);
+          console.error('Toggle tracker failed', e);
+        }
+      });
+      listEl.appendChild(row);
+    });
+  });
+
+  // ---- Auth state ----
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      try {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (!userDoc.exists || userDoc.data().role !== 'admin') {
+          alert('This account is not an admin. Signing out.');
+          auth.signOut();
+          return;
+        }
+        loginView.style.display = 'none';
+        panelView.classList.add('show');
+        document.getElementById('whoEmail').textContent = user.email;
+      } catch (e) {
+        showError('Could not verify admin access: ' + e.message);
+        auth.signOut();
+      }
+    } else {
+      loginView.style.display = 'flex';
+      panelView.classList.remove('show');
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Sign In';
+    }
+  });
+</script>
+
+</body>
+</html>
